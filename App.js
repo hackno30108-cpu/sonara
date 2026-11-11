@@ -6,7 +6,7 @@ import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './src/theme';
-import { PlayerProvider } from './src/PlayerContext';
+import { PlayerProvider, usePlayer } from './src/PlayerContext';
 import HomeScreen from './src/screens/HomeScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
@@ -14,12 +14,14 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import MiniPlayer from './src/components/MiniPlayer';
 import FullPlayer from './src/components/FullPlayer';
 import AddToPlaylistModal from './src/components/AddToPlaylistModal';
+import ArtistModal from './src/components/ArtistModal';
 
 const Tab = createBottomTabNavigator();
 const icons = { Home: 'compass', Search: 'search', Library: 'library', Settings: 'settings' };
 
 function Shell() {
   const { colors, mode } = useTheme();
+  const { artist, playerOpen } = usePlayer();
   const navTheme = useMemo(() => {
     const base = mode === 'dark' ? DarkTheme : DefaultTheme;
     return { ...base, colors: { ...base.colors, background: colors.bg, card: colors.bg, border: colors.line, primary: colors.accent, text: colors.text } };
@@ -50,7 +52,8 @@ function Shell() {
         </Tab.Navigator>
       </NavigationContainer>
       <FullPlayer />
-      <AddToPlaylistModal />
+      <ArtistModal />
+      <AddToPlaylistModal enabled={!artist && !playerOpen} />
     </>
   );
 }

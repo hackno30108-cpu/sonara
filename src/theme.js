@@ -25,6 +25,8 @@ export function ThemeProvider({ children }) {
   const [mode, setMode] = useState('dark');
   const [accent, setAccent] = useState(ACCENTS[0].name);
   const [size, setSize] = useState(SIZES[0].name);
+  const [fade, setFade] = useState(true);
+  const [scId, setScId] = useState('');
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -35,23 +37,25 @@ export function ThemeProvider({ children }) {
         if (o.mode) setMode(o.mode);
         if (o.accent) setAccent(o.accent);
         if (o.size) setSize(o.size);
+        if (typeof o.fade === 'boolean') setFade(o.fade);
+        if (typeof o.scId === 'string') setScId(o.scId);
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(KEY, JSON.stringify({ mode, accent, size })).catch(() => {});
-  }, [mode, accent, size, loaded]);
+    if (loaded) AsyncStorage.setItem(KEY, JSON.stringify({ mode, accent, size, fade, scId })).catch(() => {});
+  }, [mode, accent, size, fade, scId, loaded]);
 
   const value = useMemo(() => {
     const scale = (SIZES.find((s) => s.name === size) || SIZES[0]).scale;
     const color = (ACCENTS.find((a) => a.name === accent) || ACCENTS[0]).color;
     return {
-      mode, setMode, accent, setAccent, size, setSize,
+      mode, setMode, accent, setAccent, size, setSize, fade, setFade, scId, setScId,
       colors: { ...BASE[mode], accent: color },
       fs: (n) => Math.round(n * scale),
     };
-  }, [mode, accent, size]);
+  }, [mode, accent, size, fade, scId]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

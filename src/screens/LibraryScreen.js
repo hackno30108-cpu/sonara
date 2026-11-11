@@ -10,12 +10,13 @@ import Segmented from '../components/Segmented';
 const SEGS = [
   { key: 'likes', label: 'Đã thích' },
   { key: 'playlists', label: 'Playlist' },
+  { key: 'downloads', label: 'Đã tải' },
   { key: 'history', label: 'Lịch sử' },
 ];
 
 export default function LibraryScreen() {
   const { colors, fs } = useTheme();
-  const { likes, playlists, history, createPlaylist, deletePlaylist, removeFromPlaylist, clearHistory, playAt } = usePlayer();
+  const { likes, playlists, history, downloads, createPlaylist, deletePlaylist, removeFromPlaylist, clearHistory, playAt } = usePlayer();
   const [seg, setSeg] = useState('likes');
   const [openId, setOpenId] = useState(null);
   const [name, setName] = useState('');
@@ -51,6 +52,13 @@ export default function LibraryScreen() {
   let body;
   if (seg === 'likes') {
     body = <TrackList tracks={likes} emptyText="Chạm biểu tượng trái tim ở bất kỳ bài nào để lưu vào đây." />;
+  } else if (seg === 'downloads') {
+    const dl = Object.values(downloads).map((x) => x.track);
+    body = (
+      <TrackList
+        tracks={dl} emptyText="Chưa có bài nào được tải. Chạm dấu ⋯ ở bài hát rồi chọn Tải về để nghe khi không có mạng."
+      />
+    );
   } else if (seg === 'history') {
     body = (
       <TrackList

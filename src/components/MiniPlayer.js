@@ -1,12 +1,17 @@
-import React, { useMemo } from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { View, Text, Image, Pressable, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
 
-export default function MiniPlayer() {
+export default function MiniPlayer({ onOpen }) {
   const { current, status, toggle, next, setPlayerOpen } = usePlayer();
   const { colors, fs } = useTheme();
+  const appear = useRef(new Animated.Value(0)).current;
+  const has = !!current;
+  useEffect(() => {
+    if (has) Animated.spring(appear, { toValue: 1, friction: 8, useNativeDriver: true }).start();
+  }, [has]);
   const s = useMemo(() => StyleSheet.create({
     wrap: { backgroundColor: colors.surface },
     row: { flexDirection: 'row', alignItems: 'center', padding: 8, paddingHorizontal: 12 },
@@ -20,21 +25,23 @@ export default function MiniPlayer() {
   if (!current) return null;
   const p = status.duration ? status.currentTime / status.duration : 0;
   return (
-    <Pressable onPress={() => setPlayerOpen(true)} style={s.wrap}>
-      <View style={s.row}>
-        {current.artwork && <Image source={{ uri: current.artwork }} style={s.art} />}
-        <View style={s.info}>
-          <Text numberOfLines={1} style={s.title}>{current.title}</Text>
-          <Text numberOfLines={1} style={s.artist}>{current.artist}</Text>
+    <Animated.View style={{ opacity: appear, transform: [{ translateY: appear.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
+      <Pressable onPress={() => (onOpen ? onOpen() : setPlayerOpen(true))} style={s.wrap}>
+        <View style={s.row}>
+          {current.artwork && <Image source={{ uri: current.artwork }} style={s.art} />}
+          <View style={s.info}>
+            <Text numberOfLines={1} style={s.title}>{current.title}</Text>
+            <Text numberOfLines={1} style={s.artist}>{current.artist}</Text>
+          </View>
+          <Pressable hitSlop={10} onPress={toggle}>
+            <Ionicons name={status.playing ? 'pause' : 'play'} size={30} color={colors.text} />
+          </Pressable>
+          <Pressable hitSlop={10} onPress={next} style={{ marginLeft: 16 }}>
+            <Ionicons name="play-skip-forward" size={26} color={colors.text} />
+          </Pressable>
         </View>
-        <Pressable hitSlop={10} onPress={toggle}>
-          <Ionicons name={status.playing ? 'pause' : 'play'} size={30} color={colors.text} />
-        </Pressable>
-        <Pressable hitSlop={10} onPress={next} style={{ marginLeft: 16 }}>
-          <Ionicons name="play-skip-forward" size={26} color={colors.text} />
-        </Pressable>
-      </View>
-      <View style={s.bar}><View style={[s.fill, { width: `${p * 100}%` }]} /></View>
-    </Pressable>
+        <View style={s.bar}><View style={[s.fill, { width: `${p * 100}%` }]} /></View>
+      </Pressable>
+    </Animated.View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
 import TrackItem from './TrackItem';
@@ -10,7 +10,14 @@ export default function TrackList({ tracks, queue, offset = 0, loading, error, e
   const s = useMemo(() => StyleSheet.create({
     empty: { color: colors.muted, textAlign: 'center', marginTop: 40, paddingHorizontal: 32, lineHeight: fs(24), fontSize: fs(15) },
   }), [colors, fs]);
-  if (loading && !tracks.length) return <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />;
+  if (loading && !tracks.length) {
+    return (
+      <View>
+        {header}
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
+      </View>
+    );
+  }
   return (
     <FlatList
       data={tracks}

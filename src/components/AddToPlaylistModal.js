@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
 
-export default function AddToPlaylistModal() {
+export default function AddToPlaylistModal({ enabled = true }) {
   const { pickTrack, setPickTrack, playlists, addToPlaylist, createPlaylist } = usePlayer();
   const { colors, fs } = useTheme();
   const [name, setName] = useState('');
@@ -22,7 +22,7 @@ export default function AddToPlaylistModal() {
     btn: { marginLeft: 10, backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 18 },
     btnText: { color: '#fff', fontWeight: '700', fontSize: fs(16) },
   }), [colors, fs]);
-  if (!pickTrack) return null;
+  if (!pickTrack || !enabled) return null;
   const close = () => { setPickTrack(null); setName(''); };
   const create = () => {
     if (!name.trim()) return;
