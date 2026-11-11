@@ -5,8 +5,8 @@ import { useTheme } from '../theme';
 export default function Segmented({ options, value, onChange }) {
   const { colors, fs } = useTheme();
   const s = useMemo(() => StyleSheet.create({
-    wrap: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginHorizontal: 16, marginBottom: 8 },
-    item: { flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: 'center' },
+    wrap: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 16, padding: 4, borderWidth: 1, borderColor: colors.line, marginHorizontal: 16, marginBottom: 8 },
+    item: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
     text: { fontSize: fs(15), fontWeight: '600' },
   }), [colors, fs]);
   return (

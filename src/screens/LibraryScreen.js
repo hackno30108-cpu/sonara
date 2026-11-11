@@ -21,7 +21,7 @@ export default function LibraryScreen() {
   const [openId, setOpenId] = useState(null);
   const [name, setName] = useState('');
   const s = useMemo(() => StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.bg },
+    screen: { flex: 1, backgroundColor: colors.page },
     h1: { color: colors.text, fontSize: fs(30), fontWeight: '800', padding: 16, paddingBottom: 8 },
     topRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
     plName: { flex: 1, color: colors.text, fontSize: fs(22), fontWeight: '800', marginLeft: 6 },

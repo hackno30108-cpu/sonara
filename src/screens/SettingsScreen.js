@@ -15,6 +15,8 @@ export default function SettingsScreen() {
   const [bytes, setBytes] = useState(0);
   const [importing, setImporting] = useState(false);
   const [text, setText] = useState('');
+  const [idText, setIdText] = useState(scId);
+  useEffect(() => { setIdText(scId); }, [scId]);
   const files = Object.values(downloads).map((x) => x.file);
   const count = files.length;
 
@@ -26,7 +28,7 @@ export default function SettingsScreen() {
   }, [count]);
 
   const s = useMemo(() => StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.bg },
+    screen: { flex: 1, backgroundColor: colors.page },
     h1: { color: colors.text, fontSize: fs(30), fontWeight: '800', padding: 16 },
     h2: { color: colors.text, fontSize: fs(18), fontWeight: '700', paddingHorizontal: 16, marginTop: 18, marginBottom: 10 },
     dots: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12 },
@@ -66,7 +68,7 @@ export default function SettingsScreen() {
 
         <Text style={s.h2}>Chế độ hiển thị</Text>
         <Segmented
-          options={[{ key: 'dark', label: 'Tối' }, { key: 'light', label: 'Sáng' }]}
+          options={[{ key: 'liquid', label: 'Liquid Glass' }, { key: 'dark', label: 'Tối' }, { key: 'light', label: 'Sáng' }]}
           value={mode} onChange={setMode}
         />
 
@@ -91,11 +93,11 @@ export default function SettingsScreen() {
 
         <Text style={s.h2}>Âm thanh</Text>
         <Segmented
-          options={[{ key: 'on', label: 'Mờ dần khi vào bài' }, { key: 'off', label: 'Tắt' }]}
+          options={[{ key: 'on', label: 'Chuyển bài mượt' }, { key: 'off', label: 'Tắt' }]}
           value={fade ? 'on' : 'off'} onChange={(k) => setFade(k === 'on')}
         />
         <Text style={s.note}>
-          Âm lượng tăng nhẹ trong chưa đầy 1 giây khi bắt đầu bài, tránh giật mình. Khi đổi tốc độ phát, cao độ giọng được giữ nguyên.
+          Âm lượng tăng nhẹ khi vào bài và nhỏ dần ở 2 giây cuối, nên bài nọ nối sang bài kia êm hơn, không giật. Khi đổi tốc độ phát, cao độ giọng được giữ nguyên.
         </Text>
 
         <Text style={s.h2}>Nguồn nhạc</Text>
@@ -103,7 +105,8 @@ export default function SettingsScreen() {
           SoundCloud client_id (lấy ở soundcloud.com/you/apps nếu đăng ký được). Chỉ dán client_id, không dán client_secret. Bài SoundCloud không tải offline được và có liên kết về trang gốc.
         </Text>
         <TextInput
-          value={scId} onChangeText={(v) => setScId(v.trim())} autoCorrect={false} autoCapitalize="none"
+          value={idText} onChangeText={setIdText} onEndEditing={() => setScId(idText.trim())} onSubmitEditing={() => setScId(idText.trim())}
+          autoCorrect={false} autoCapitalize="none" returnKeyType="done"
           placeholder="Dán SoundCloud client_id" placeholderTextColor={colors.muted} style={[s.input, { minHeight: 0 }]}
         />
 

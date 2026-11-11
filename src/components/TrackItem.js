@@ -11,7 +11,7 @@ export default function TrackItem({ track, onPress, onRemove }) {
   const { colors, fs } = useTheme();
   const s = useMemo(() => StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16 },
-    art: { width: 60, height: 60, borderRadius: 8, backgroundColor: colors.surface },
+    art: { width: 60, height: 60, borderRadius: 14, backgroundColor: colors.surface },
     info: { flex: 1, marginHorizontal: 12 },
     titleRow: { flexDirection: 'row', alignItems: 'center' },
     title: { flexShrink: 1, color: colors.text, fontSize: fs(17), fontWeight: '600' },

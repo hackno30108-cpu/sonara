@@ -10,7 +10,7 @@ export default function AddToPlaylistModal({ enabled = true }) {
   const [name, setName] = useState('');
   const s = useMemo(() => StyleSheet.create({
     backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32 },
+    sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: colors.line, padding: 20, paddingBottom: 32 },
     h: { color: colors.text, fontSize: fs(20), fontWeight: '800' },
     sub: { color: colors.muted, fontSize: fs(14), marginTop: 2, marginBottom: 12 },
     row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line },

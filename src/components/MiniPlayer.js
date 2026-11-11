@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, Image, Pressable, Animated, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
+import Glass from './Glass';
 import { usePlayer } from '../PlayerContext';
 
 export default function MiniPlayer({ onOpen }) {
@@ -13,7 +14,7 @@ export default function MiniPlayer({ onOpen }) {
     if (has) Animated.spring(appear, { toValue: 1, friction: 8, useNativeDriver: true }).start();
   }, [has]);
   const s = useMemo(() => StyleSheet.create({
-    wrap: { backgroundColor: colors.surface },
+    wrap: { marginHorizontal: 10, marginTop: 6, marginBottom: 6 },
     row: { flexDirection: 'row', alignItems: 'center', padding: 8, paddingHorizontal: 12 },
     art: { width: 46, height: 46, borderRadius: 6 },
     info: { flex: 1, marginHorizontal: 10 },
@@ -26,7 +27,8 @@ export default function MiniPlayer({ onOpen }) {
   const p = status.duration ? status.currentTime / status.duration : 0;
   return (
     <Animated.View style={{ opacity: appear, transform: [{ translateY: appear.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
-      <Pressable onPress={() => (onOpen ? onOpen() : setPlayerOpen(true))} style={s.wrap}>
+      <Glass radius={22} style={s.wrap}>
+      <Pressable onPress={() => (onOpen ? onOpen() : setPlayerOpen(true))}>
         <View style={s.row}>
           {current.artwork && <Image source={{ uri: current.artwork }} style={s.art} />}
           <View style={s.info}>
@@ -42,6 +44,7 @@ export default function MiniPlayer({ onOpen }) {
         </View>
         <View style={s.bar}><View style={[s.fill, { width: `${p * 100}%` }]} /></View>
       </Pressable>
+      </Glass>
     </Animated.View>
   );
 }

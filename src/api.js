@@ -99,25 +99,51 @@ export const getViet = (label) => {
 const SC = 'https://api.soundcloud.com';
 export const soundcloudStream = (rawId, clientId) => `${SC}/tracks/${rawId}/stream?client_id=${encodeURIComponent(clientId)}`;
 
-export async function searchSoundCloud(q, clientId) {
+const mapSC = (t) => ({
+  id: `sc:${t.id}`,
+  rawId: t.id,
+  source: 'soundcloud',
+  title: t.title,
+  artist: t.user?.username || 'Không rõ nghệ sĩ',
+  artwork: (t.artwork_url || t.user?.avatar_url || '').replace('-large', '-t500x500') || null,
+  duration: Math.round((t.duration || 0) / 1000),
+  genre: t.genre || '',
+  userId: null,
+  link: t.permalink_url || null,
+});
+
+async function scFetch(params, clientId) {
   if (!clientId) throw new Error('NO_CLIENT_ID');
-  const qs = new URLSearchParams({ q, limit: '30', access: 'playable', client_id: clientId }).toString();
-  const res = await fetch(`${SC}/tracks?${qs}`);
+  const run = async (p) => {
+    const qs = new URLSearchParams({ limit: '30', access: 'playable', ...p, client_id: clientId }).toString();
+    return fetch(`${SC}/tracks?${qs}`);
+  };
+  let res = await run(params);
+  // Nếu máy chủ từ chối tham số sắp xếp thì thử lại không có nó.
+  if (!res.ok && params.order) { const { order, ...rest } = params; res = await run(rest); }
   if (!res.ok) throw new Error('SoundCloud ' + res.status);
   const json = await res.json();
   const list = Array.isArray(json) ? json : json.collection || [];
-  return list
-    .filter((t) => t && t.id && t.streamable !== false)
-    .map((t) => ({
-      id: `sc:${t.id}`,
-      rawId: t.id,
-      source: 'soundcloud',
-      title: t.title,
-      artist: t.user?.username || 'Không rõ nghệ sĩ',
-      artwork: (t.artwork_url || t.user?.avatar_url || '').replace('-large', '-t500x500') || null,
-      duration: Math.round((t.duration || 0) / 1000),
-      genre: t.genre || '',
-      userId: null,
-      link: t.permalink_url || null,
-    }));
+  return list.filter((t) => t && t.id && t.streamable !== false).map(mapSC);
+}
+
+export const searchSoundCloud = (q, clientId) => scFetch({ q }, clientId);
+export const scTrending = (clientId) => scFetch({ order: 'hotness' }, clientId);
+export const scGenre = (genre, clientId) => scFetch({ genres: genre, order: 'hotness' }, clientId);
+
+// Danh sách nhạc Việt (Vinahouse, Nonstop, Mashup...) lấy từ kho SoundCloud.
+export async function scViet(label, clientId) {
+  const tag = VIET_TAGS.find((t) => t.label === label) || VIET_TAGS[0];
+  const lists = (await Promise.allSettled(tag.queries.map((q) => scFetch({ q }, clientId))))
+    .filter((r) => r.status === 'fulfilled').map((r) => r.value);
+  if (!lists.length) throw new Error('Không tìm được');
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i < 30; i++) {
+    for (const l of lists) {
+      const t = l[i];
+      if (t && !seen.has(t.id) && t.duration >= (tag.minDuration || 0)) { seen.add(t.id); out.push(t); }
+    }
+  }
+  return out;
 }

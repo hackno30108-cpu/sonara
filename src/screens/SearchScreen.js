@@ -20,8 +20,8 @@ export default function SearchScreen() {
   const [error, setError] = useState('');
   const [longOnly, setLongOnly] = useState(false);
   const s = useMemo(() => StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.bg },
-    input: { margin: 16, marginBottom: 10, padding: 14, borderRadius: 12, backgroundColor: colors.surface, color: colors.text, fontSize: fs(17) },
+    screen: { flex: 1, backgroundColor: colors.page },
+    input: { margin: 16, marginBottom: 10, padding: 14, borderRadius: 16, backgroundColor: colors.surface, color: colors.text, fontSize: fs(17), borderWidth: 1, borderColor: colors.line },
     row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16 },
     avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
     name: { color: colors.text, fontSize: fs(17), fontWeight: '600' },
@@ -30,7 +30,7 @@ export default function SearchScreen() {
     extBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.line, marginRight: 8 },
     extText: { color: colors.text, fontSize: fs(14), fontWeight: '600', marginLeft: 6 },
     chips: { paddingHorizontal: 16, paddingBottom: 8 },
-    chip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18, backgroundColor: colors.surface, marginRight: 8 },
+    chip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 18, backgroundColor: colors.surface, marginRight: 8, borderWidth: 1, borderColor: colors.line },
     chipText: { color: colors.muted, fontSize: fs(14), fontWeight: '600' },
     empty: { color: colors.muted, textAlign: 'center', marginTop: 40, paddingHorizontal: 32, lineHeight: fs(24), fontSize: fs(15) },
   }), [colors, fs]);

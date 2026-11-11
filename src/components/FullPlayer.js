@@ -19,7 +19,7 @@ export default function FullPlayer() {
   const { current, status, toggle, next, prev, seek, toggleLike, isLiked, playerOpen, setPlayerOpen,
     shuffle, toggleShuffle, repeat, cycleRepeat, rate, setRate, sleepEnd, setSleep,
     canDownload, isDownloaded, download, removeDownload, downloading, openArtist } = usePlayer();
-  const { colors, fs } = useTheme();
+  const { colors, fs, liquid } = useTheme();
   const [queueOpen, setQueueOpen] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const fadeArt = useRef(new Animated.Value(1)).current;
@@ -45,7 +45,7 @@ export default function FullPlayer() {
     playBtn: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
     badge: { position: 'absolute', right: -4, top: -4, fontSize: 11, fontWeight: '800', color: colors.accent },
     tools: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 28 },
-    tool: { flex: 1, alignItems: 'center', paddingVertical: 10, marginHorizontal: 4, borderRadius: 14, backgroundColor: colors.surface },
+    tool: { flex: 1, alignItems: 'center', paddingVertical: 10, marginHorizontal: 4, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
     toolText: { color: colors.muted, fontSize: fs(12), marginTop: 4, fontWeight: '600' },
   }), [colors, fs]);
   if (!current) return null;
@@ -86,7 +86,7 @@ export default function FullPlayer() {
     <Modal visible={playerOpen} animationType="slide" onRequestClose={() => setPlayerOpen(false)}>
       <View style={s.screen}>
         {current.artwork ? <Image source={{ uri: current.artwork }} blurRadius={45} style={StyleSheet.absoluteFill} /> : null}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: current.artwork ? 0.78 : 1 }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg, opacity: current.artwork ? (liquid ? 0.6 : 0.78) : 1 }]} />
         <SafeAreaView style={{ flex: 1 }}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Pressable hitSlop={16} onPress={() => setPlayerOpen(false)} style={s.close}>

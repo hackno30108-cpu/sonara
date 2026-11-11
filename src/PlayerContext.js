@@ -36,6 +36,7 @@ export function PlayerProvider({ children }) {
   fadeOnRef.current = fade;
   const rateRef = useRef(1);
   const fadeTimer = useRef(null);
+  const fadedRef = useRef(false);
   const sleepTimer = useRef(null);
 
   const current = index >= 0 ? queue[index] : null;
@@ -92,6 +93,7 @@ export function PlayerProvider({ children }) {
     setQueue(list);
     setIndex(i);
     setData((d) => ({ ...d, history: [track, ...d.history.filter((t) => t.id !== track.id)].slice(0, 50) }));
+    fadedRef.current = false;
     const dl = dataRef.current.downloads[track.id];
     let uri = track.source === 'soundcloud' ? soundcloudStream(track.rawId, scRef.current) : streamUrl(track.id);
     if (dl) { try { uri = localUri(dl.file); } catch (e) {} }
@@ -128,6 +130,22 @@ export function PlayerProvider({ children }) {
     if (status.playing) player.pause();
     else { try { player.volume = 1; } catch (e) {} player.play(); }
   }, [status.playing, player]);
+  // Chuyển bài mượt: nhỏ dần ở 2 giây cuối, bài kế tiếp sẽ lớn dần ở đầu bài.
+  useEffect(() => {
+    if (!fadeOnRef.current || !status.playing) return;
+    const dur = status.duration || 0;
+    if (dur < 12) return;
+    const left = dur - status.currentTime;
+    if (left <= 2 && !fadedRef.current) {
+      fadedRef.current = true;
+      ramp(1, 0, Math.max(600, left * 1000 - 200));
+    } else if (left > 3.5 && fadedRef.current) {
+      fadedRef.current = false;
+      clearInterval(fadeTimer.current);
+      try { player.volume = 1; } catch (e) {}
+    }
+  }, [status.currentTime]);
+
   const seek = useCallback((sec) => player.seekTo(sec), [player]);
   useEffect(() => { if (status.didJustFinish) advance(true); }, [status.didJustFinish]);
 

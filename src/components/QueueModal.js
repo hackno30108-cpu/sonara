@@ -9,7 +9,7 @@ export default function QueueModal({ visible, onClose }) {
   const { colors, fs } = useTheme();
   const s = useMemo(() => StyleSheet.create({
     backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-    sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 18, paddingBottom: 28, maxHeight: '70%' },
+    sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: colors.line, paddingTop: 18, paddingBottom: 28, maxHeight: '70%' },
     head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
     h: { flex: 1, color: colors.text, fontSize: fs(20), fontWeight: '800' },
     row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 20 },
