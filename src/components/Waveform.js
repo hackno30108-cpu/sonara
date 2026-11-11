@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 
 const BARS = 64;
 function makeBars(seed) {
@@ -15,6 +15,7 @@ function makeBars(seed) {
 }
 
 export default function Waveform({ seed, progress, onSeek, height = 72 }) {
+  const { colors } = useTheme();
   const bars = useMemo(() => makeBars(seed), [seed]);
   const [w, setW] = useState(0);
   return (
@@ -26,10 +27,7 @@ export default function Waveform({ seed, progress, onSeek, height = 72 }) {
       {bars.map((h, i) => (
         <View
           key={i}
-          style={{
-            width: 3, borderRadius: 2, height: height * h,
-            backgroundColor: i / BARS <= progress ? colors.accent : colors.wave,
-          }}
+          style={{ width: 3, borderRadius: 2, height: height * h, backgroundColor: i / BARS <= progress ? colors.accent : colors.wave }}
         />
       ))}
     </Pressable>
