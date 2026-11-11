@@ -3,14 +3,13 @@ import { View, Text, Image, Pressable, FlatList, ScrollView, StyleSheet } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
-import { getTrending, getRecommendations, getViet, scTrending, scGenre, scViet, GENRES, VIET_TAGS } from '../api';
-import Segmented from '../components/Segmented';
+import { getFeed, getRecommendations, sourceReady, SOURCES, GENRES, VIET_TAGS } from '../api';
 import TrackList from '../components/TrackList';
 
 const HERO = 8;
 
 export default function HomeScreen() {
-  const { colors, fs, scId, src, setSrc } = useTheme();
+  const { colors, fs, scId, jmId, vn, quality, src, setSrc } = useTheme();
   const { playAt, likes, history } = usePlayer();
   const [sel, setSel] = useState(null); // null | { kind: 'viet' | 'genre', key }
   const [tracks, setTracks] = useState([]);
@@ -18,9 +17,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const reqId = useRef(0);
-  const useSC = src === 'soundcloud' && !!scId;
-  const scRef = useRef(scId);
-  scRef.current = scId;
+  const ready = sourceReady(src);
   const seedRef = useRef({ likes, history });
   seedRef.current = { likes, history };
 
@@ -32,6 +29,7 @@ export default function HomeScreen() {
     chips: { paddingHorizontal: 16, paddingTop: 4 },
     chip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: colors.surface, marginRight: 8, borderWidth: 1, borderColor: colors.line },
     chipViet: { borderColor: colors.accent },
+    srcChip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: colors.line },
     chipText: { color: colors.muted, fontSize: fs(15), fontWeight: '600' },
     card: { width: 210, marginRight: 14 },
     cover: { width: 210, height: 210, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
@@ -39,31 +37,30 @@ export default function HomeScreen() {
     artist: { color: colors.muted, fontSize: fs(14), marginTop: 2 },
   }), [colors, fs]);
 
-  const load = useCallback(async (sl, sc) => {
+  const load = useCallback(async (sl, source) => {
     const id = ++reqId.current;
     setLoading(true); setError('');
     try {
-      let t;
-      if (sc) {
-        const cid = scRef.current;
-        t = !sl ? await scTrending(cid) : sl.kind === 'genre' ? await scGenre(sl.key, cid) : await scViet(sl.key, cid);
-      } else {
-        t = !sl ? await getTrending() : sl.kind === 'genre' ? await getTrending(sl.key) : await getViet(sl.key);
-      }
+      const t = await getFeed(sl, source);
       if (id !== reqId.current) return;
       setTracks(t);
     } catch (e) {
       if (id !== reqId.current) return;
+      setTracks([]);
       setError('Không tải được nhạc. Kiểm tra mạng rồi kéo xuống để thử lại.');
     }
     setLoading(false);
-    if (!sl && !sc) {
+    if (!sl) {
       const { likes: l, history: h } = seedRef.current;
       const seed = [...l, ...l, ...h.slice(0, 20)];
       if (seed.length) getRecommendations(seed).then((r) => { if (id === reqId.current) setRecs(r); }).catch(() => {});
     }
   }, []);
-  useEffect(() => { setRecs([]); load(sel, useSC); }, [sel, useSC, scId, load]);
+  useEffect(() => {
+    setRecs([]);
+    if (!ready) { reqId.current++; setTracks([]); setLoading(false); setError(''); return; }
+    load(sel, src);
+  }, [sel, src, ready, scId, jmId, vn, quality, load]);
 
   const pick = (c) => {
     if ((c?.key ?? null) === (sel?.key ?? null) && c?.kind === sel?.kind) return;
@@ -96,11 +93,25 @@ export default function HomeScreen() {
   const header = (
     <View>
       <Text style={s.h1}>Khám phá</Text>
-      <View style={{ marginTop: 10 }}>
-        <Segmented options={[{ key: 'soundcloud', label: 'SoundCloud' }, { key: 'audius', label: 'Audius' }]} value={src} onChange={(k) => { setTracks([]); setSrc(k); }} />
-      </View>
-      {src === 'soundcloud' && !scId && (
-        <Text style={s.note}>Chưa có SoundCloud client_id nên đang hiện nhạc Audius. Nhập ở Cài đặt › Nguồn nhạc để lấy danh sách từ SoundCloud.</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} style={{ marginTop: 10, flexGrow: 0 }}>
+        {SOURCES.map((o) => {
+          const on = o.key === src;
+          return (
+            <Pressable key={o.key} onPress={() => { if (!on) { setTracks([]); setSrc(o.key); } }} style={[s.srcChip, on && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
+              <Text style={[s.chipText, on && { color: '#fff' }]}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      {!ready && (
+        <Text style={s.note}>
+          {src === 'jamendo'
+            ? 'Jamendo cần client_id miễn phí (đăng ký ở devportal.jamendo.com). Nhập ở Cài đặt › Nguồn nhạc.'
+            : 'SoundCloud cần client_id của bạn. Nhập ở Cài đặt › Nguồn nhạc.'}
+        </Text>
+      )}
+      {src === 'all' && !jmId && (
+        <Text style={s.note}>Mẹo: nhập Jamendo client_id ở Cài đặt để có thêm nhạc từ Jamendo trong mục Tất cả.</Text>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
         {allChips.map((c) => {
@@ -113,8 +124,8 @@ export default function HomeScreen() {
         })}
       </ScrollView>
       {!sel && recs.length > 0 && cards('Gợi ý cho bạn', recs.slice(0, 12))}
-      {tracks.length > 0 && cards(sel ? sel.key : 'Nổi bật hôm nay', tracks.slice(0, HERO))}
-      {tracks.length > HERO && <Text style={s.h2}>Đang được nghe nhiều</Text>}
+      {tracks.length > 0 && cards(sel ? sel.key : vn === 'off' ? 'Nổi bật hôm nay' : 'Nhạc Việt mới & nổi bật', tracks.slice(0, HERO))}
+      {tracks.length > HERO && <Text style={s.h2}>{sel ? 'Thêm trong mục này' : 'Tiếp theo cho bạn'}</Text>}
     </View>
   );
 
@@ -122,8 +133,8 @@ export default function HomeScreen() {
     <SafeAreaView style={s.screen} edges={['top']}>
       <TrackList
         tracks={tracks.slice(HERO)} queue={tracks} offset={HERO}
-        loading={loading} error={error} emptyText="Chưa tìm thấy bài nào cho mục này. Thử mục khác hoặc dùng tab Tìm kiếm."
-        onRefresh={() => load(sel, useSC)} header={header}
+        loading={loading} error={error} emptyText={vn === 'only' ? 'Chưa tìm thấy bài nhạc Việt nào cho mục này. Thử nguồn "Tất cả", mục khác, hoặc đổi "Ưu tiên nhạc Việt" trong Cài đặt.' : 'Chưa tìm thấy bài nào cho mục này. Thử mục khác hoặc dùng tab Tìm kiếm.'}
+        onRefresh={() => ready && load(sel, src)} header={header}
       />
     </SafeAreaView>
   );

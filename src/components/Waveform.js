@@ -14,7 +14,7 @@ function makeBars(seed) {
   return out;
 }
 
-export default function Waveform({ seed, progress, onSeek, height = 72 }) {
+export default function Waveform({ seed, progress, onSeek, height = 72, marks = [] }) {
   const { colors } = useTheme();
   const bars = useMemo(() => makeBars(seed), [seed]);
   const [w, setW] = useState(0);
@@ -29,6 +29,9 @@ export default function Waveform({ seed, progress, onSeek, height = 72 }) {
           key={i}
           style={{ width: 3, borderRadius: 2, height: height * h, backgroundColor: i / BARS <= progress ? colors.accent : colors.wave }}
         />
+      ))}
+      {w > 0 && marks.map((f, i) => (
+        <View key={'m' + i} pointerEvents="none" style={{ position: 'absolute', top: 0, left: Math.max(0, Math.min(w - 6, f * w - 3)), width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent }} />
       ))}
     </Pressable>
   );

@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
-import { showSheet } from '../ui';
+import { showSheet, shareTrack } from '../ui';
 import Waveform from './Waveform';
 import QueueModal from './QueueModal';
+import NotesModal from './NotesModal';
 
 const fmt = (sec = 0) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
@@ -18,9 +19,11 @@ const SLEEPS = [
 export default function FullPlayer() {
   const { current, status, toggle, next, prev, seek, toggleLike, isLiked, playerOpen, setPlayerOpen,
     shuffle, toggleShuffle, repeat, cycleRepeat, rate, setRate, sleepEnd, setSleep,
-    canDownload, isDownloaded, download, removeDownload, downloading, openArtist } = usePlayer();
+    canDownload, canSave, isDownloaded, download, removeDownload, downloading, openArtist,
+    startRadio, radioOn, toggleRepost, isReposted, notes } = usePlayer();
   const { colors, fs, liquid } = useTheme();
   const [queueOpen, setQueueOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
   const fadeArt = useRef(new Animated.Value(1)).current;
 
@@ -107,7 +110,7 @@ export default function FullPlayer() {
               </Pressable>
             </View>
             <View style={{ paddingHorizontal: 24 }}>
-              <Waveform seed={current.id} progress={progress} onSeek={(f) => seek(f * dur)} />
+              <Waveform seed={current.id} progress={progress} onSeek={(f) => seek(f * dur)} marks={dur ? (notes[current.id] || []).map((n) => n.t / dur) : []} />
               <View style={s.times}>
                 <Text style={s.time}>{fmt(status.currentTime)}</Text>
                 <Text style={s.time}>{fmt(dur)}</Text>
@@ -131,11 +134,18 @@ export default function FullPlayer() {
               {tool('speedometer-outline', rate === 1 ? '1x' : `${rate}x`, rate !== 1, speedSheet)}
               {tool('moon-outline', sleepLabel, !!sleepEnd, sleepSheet)}
               {tool('list', 'Hàng đợi', false, () => setQueueOpen(true))}
-              {canDownload && current.source !== 'soundcloud' && tool(saved ? 'checkmark-circle' : 'arrow-down-circle-outline', saved ? 'Đã tải' : busy ? 'Đang tải' : 'Tải về', saved, downloadPress)}
+              {canDownload && (saved || canSave(current)) && tool(saved ? 'checkmark-circle' : 'arrow-down-circle-outline', saved ? 'Đã tải' : busy ? 'Đang tải' : 'Tải về', saved, downloadPress)}
+            </View>
+            <View style={[s.tools, { marginTop: -16 }]}>
+              {tool('radio-outline', radioOn ? 'Radio đang bật' : 'Radio', radioOn, () => startRadio(current))}
+              {tool('share-outline', 'Chia sẻ', false, () => shareTrack(current))}
+              {tool('arrow-redo-outline', isReposted(current.id) ? 'Đã repost' : 'Repost', isReposted(current.id), () => toggleRepost(current))}
+              {tool('chatbubble-ellipses-outline', (notes[current.id] || []).length ? `Ghi chú (${notes[current.id].length})` : 'Ghi chú', (notes[current.id] || []).length > 0, () => setNotesOpen(true))}
             </View>
           </ScrollView>
         </SafeAreaView>
         <QueueModal visible={queueOpen} onClose={() => setQueueOpen(false)} />
+        <NotesModal visible={notesOpen} onClose={() => setNotesOpen(false)} />
       </View>
     </Modal>
   );

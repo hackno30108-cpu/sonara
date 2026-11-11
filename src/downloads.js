@@ -8,10 +8,13 @@ const dir = () => fs().documentDirectory + 'sonara/';
 
 export const localUri = (file) => dir() + file;
 
-export async function downloadTrack(id, url) {
+// Id có thể chứa ký tự không hợp lệ làm tên file (ví dụ "jm:123", "ia:ten/bai.mp3").
+const safe = (id) => String(id).replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 120);
+
+export async function downloadTrack(id, url, ext = 'mp3') {
   const FS = fs();
   await FS.makeDirectoryAsync(dir(), { intermediates: true }).catch(() => {});
-  const file = `${id}.mp3`;
+  const file = `${safe(id)}.${ext}`;
   const res = await FS.downloadAsync(url, dir() + file);
   if (res.status !== 200) {
     await FS.deleteAsync(dir() + file, { idempotent: true }).catch(() => {});

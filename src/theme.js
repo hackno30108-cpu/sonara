@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setApiConfig } from './api';
 
 export const ACCENTS = [
   { name: 'Tím', color: '#7B6CFF' },
@@ -28,7 +29,10 @@ export function ThemeProvider({ children }) {
   const [size, setSize] = useState(SIZES[0].name);
   const [fade, setFade] = useState(true);
   const [scId, setScId] = useState('');
-  const [src, setSrc] = useState('soundcloud'); // nguồn của tab Khám phá
+  const [jmId, setJmId] = useState('');
+  const [quality, setQuality] = useState('high'); // high | data
+  const [vn, setVn] = useState('first'); // first = nhạc Việt lên đầu | only = chỉ nhạc Việt | off
+  const [src, setSrc] = useState('all'); // nguồn của tab Khám phá
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -41,25 +45,32 @@ export function ThemeProvider({ children }) {
         if (o.size) setSize(o.size);
         if (typeof o.fade === 'boolean') setFade(o.fade);
         if (typeof o.scId === 'string') setScId(o.scId);
-        if (o.src === 'audius' || o.src === 'soundcloud') setSrc(o.src);
+        if (typeof o.jmId === 'string') setJmId(o.jmId);
+        if (o.quality === 'high' || o.quality === 'data') setQuality(o.quality);
+        if (o.vn === 'first' || o.vn === 'only' || o.vn === 'off') setVn(o.vn);
+        if (['all', 'audius', 'jamendo', 'archive'].includes(o.src)) setSrc(o.src);
+        else if (o.src === 'soundcloud' && o.scId) setSrc('soundcloud'); // bản cũ mặc định SoundCloud dù chưa có client_id
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(KEY, JSON.stringify({ v: 2, mode, accent, size, fade, scId, src })).catch(() => {});
-  }, [mode, accent, size, fade, scId, src, loaded]);
+    if (loaded) AsyncStorage.setItem(KEY, JSON.stringify({ v: 2, mode, accent, size, fade, scId, jmId, quality, vn, src })).catch(() => {});
+  }, [mode, accent, size, fade, scId, jmId, quality, vn, src, loaded]);
+
+  // Nạp cấu hình cho lớp API ngay lúc render, để màn hình con (chạy effect trước) luôn dùng giá trị mới.
+  setApiConfig({ scId, jmId, quality, vn });
 
   const value = useMemo(() => {
     const scale = (SIZES.find((s) => s.name === size) || SIZES[0]).scale;
     const color = (ACCENTS.find((a) => a.name === accent) || ACCENTS[0]).color;
     return {
-      mode, setMode, accent, setAccent, size, setSize, fade, setFade, scId, setScId, src, setSrc,
+      mode, setMode, accent, setAccent, size, setSize, fade, setFade, scId, setScId, jmId, setJmId, quality, setQuality, vn, setVn, src, setSrc,
       liquid: mode === 'liquid',
       colors: { ...BASE[mode], accent: color, page: mode === 'liquid' ? 'transparent' : BASE[mode].bg },
       fs: (n) => Math.round(n * scale),
     };
-  }, [mode, accent, size, fade, scId, src]);
+  }, [mode, accent, size, fade, scId, jmId, quality, vn, src]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

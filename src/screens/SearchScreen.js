@@ -4,16 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
-import { searchTracks, searchArtists, searchSoundCloud, VIET_TAGS } from '../api';
+import { searchTracks, searchArtists, sourceReady, SOURCES, VIET_TAGS } from '../api';
 import TrackList from '../components/TrackList';
 import Segmented from '../components/Segmented';
 
 export default function SearchScreen() {
-  const { colors, fs, scId } = useTheme();
+  const { colors, fs, scId, jmId, vn, quality } = useTheme();
   const { openArtist } = usePlayer();
   const [q, setQ] = useState('');
   const [mode, setMode] = useState('tracks');
-  const [source, setSource] = useState('audius'); // audius | soundcloud
+  const [source, setSource] = useState('all');
   const [tracks, setTracks] = useState([]);
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,18 +41,22 @@ export default function SearchScreen() {
     const t = setTimeout(async () => {
       setLoading(true); setError('');
       try {
-        if (source === 'soundcloud') { const r = await searchSoundCloud(q.trim(), scId); if (alive) setTracks(r); }
-        else if (mode === 'tracks') { const r = await searchTracks(q.trim()); if (alive) setTracks(r); }
+        if (mode === 'tracks') { const r = await searchTracks(q.trim(), source); if (alive) setTracks(r); }
         else { const r = await searchArtists(q.trim()); if (alive) setArtists(r); }
       } catch (e) {
-        if (alive) setError(e.message === 'NO_CLIENT_ID' ? 'Chưa nhập SoundCloud client_id. Vào Cài đặt › Nguồn nhạc để nhập.' : 'Tìm kiếm thất bại. Thử lại sau.');
+        if (alive) {
+          setTracks([]); setArtists([]);
+          setError(e.message === 'NO_CLIENT_ID' ? 'Chưa nhập SoundCloud client_id. Vào Cài đặt › Nguồn nhạc để nhập.'
+            : e.message === 'NO_JM_ID' ? 'Chưa nhập Jamendo client_id. Vào Cài đặt › Nguồn nhạc để nhập.'
+            : 'Tìm kiếm thất bại. Thử lại sau.');
+        }
       }
       if (alive) setLoading(false);
     }, 450);
     return () => { alive = false; clearTimeout(t); };
-  }, [q, mode, source, scId]);
+  }, [q, mode, source, scId, jmId, vn, quality]);
 
-  const emptyText = q ? 'Không có kết quả.' : mode === 'tracks' ? 'Nhập tên bài hát để tìm.' : 'Nhập tên nghệ sĩ để tìm.';
+  const emptyText = q && !sourceReady(source) ? 'Nguồn này cần client_id. Nhập ở Cài đặt › Nguồn nhạc.' : q ? 'Không có kết quả.' : mode === 'tracks' ? 'Nhập tên bài hát để tìm.' : 'Nhập tên nghệ sĩ để tìm.';
 
   return (
     <SafeAreaView style={s.screen} edges={['top']}>
@@ -60,9 +64,18 @@ export default function SearchScreen() {
         value={q} onChangeText={setQ} placeholder={mode === 'tracks' ? 'Tên bài hát hoặc nghệ sĩ' : 'Tên nghệ sĩ'}
         placeholderTextColor={colors.muted} style={s.input} autoCorrect={false} returnKeyType="search"
       />
-      <Segmented options={[{ key: 'audius', label: 'Audius' }, { key: 'soundcloud', label: 'SoundCloud' }]} value={source} onChange={(k) => { setSource(k); setMode('tracks'); setTracks([]); }} />
-      {source === 'audius' && (
-        <Segmented options={[{ key: 'tracks', label: 'Bài hát' }, { key: 'artists', label: 'Nghệ sĩ' }]} value={mode} onChange={setMode} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={s.chips}>
+        {SOURCES.map((o) => {
+          const on = o.key === source;
+          return (
+            <Pressable key={o.key} onPress={() => { setSource(o.key); if (o.key !== 'all' && o.key !== 'audius') setMode('tracks'); setTracks([]); }} style={[s.chip, on && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
+              <Text style={[s.chipText, on && { color: '#fff' }]}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      {(source === 'all' || source === 'audius') && (
+        <Segmented options={[{ key: 'tracks', label: 'Bài hát' }, { key: 'artists', label: 'Nghệ sĩ (Audius)' }]} value={mode} onChange={setMode} />
       )}
       {!!q.trim() && (
         <View style={s.ext}>
@@ -80,7 +93,7 @@ export default function SearchScreen() {
             <Text style={[s.chipText, longOnly && { color: '#fff' }]}>Chỉ bản mix dài (&gt;15 phút)</Text>
           </Pressable>
           {VIET_TAGS.map((t) => (
-            <Pressable key={t.label} onPress={() => { setQ(t.queries[0]); if (t.minDuration) setLongOnly(true); }} style={s.chip}>
+            <Pressable key={t.label} onPress={() => { setQ(t.queries[0]); setLongOnly(!!t.minDuration); }} style={s.chip}>
               <Text style={s.chipText}>{t.label}</Text>
             </Pressable>
           ))}

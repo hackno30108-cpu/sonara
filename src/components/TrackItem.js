@@ -3,11 +3,14 @@ import { View, Text, Image, Pressable, Linking, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
-import { showSheet } from '../ui';
+import { showSheet, shareTrack } from '../ui';
+
+const BADGE = { soundcloud: '☁ ', jamendo: '♪ ', archive: '▤ ' };
 
 export default function TrackItem({ track, onPress, onRemove }) {
   const { current, status, isLiked, toggleLike, setPickTrack, playNext, addToQueue, canDownload,
-    isDownloaded, download, removeDownload, downloading, openArtist } = usePlayer();
+    canSave, isDownloaded, download, removeDownload, downloading, openArtist,
+    startRadio, toggleRepost, isReposted } = usePlayer();
   const { colors, fs } = useTheme();
   const s = useMemo(() => StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 16 },
@@ -28,13 +31,19 @@ export default function TrackItem({ track, onPress, onRemove }) {
       { label: 'Phát tiếp theo', run: () => playNext(track) },
       { label: 'Thêm vào hàng đợi', run: () => addToQueue(track) },
       { label: 'Thêm vào playlist', run: () => setPickTrack(track) },
+      { label: 'Bắt đầu radio từ bài này', run: () => startRadio(track) },
+      { label: isReposted(track.id) ? 'Bỏ repost' : 'Repost', run: () => toggleRepost(track) },
+      { label: 'Chia sẻ', run: () => shareTrack(track) },
     ];
-    if (canDownload && track.source !== 'soundcloud') {
+    if (canDownload && (saved || canSave(track))) {
       items.push(saved
         ? { label: 'Xóa bản tải về', run: () => removeDownload(track.id), destructive: true }
         : { label: busy ? 'Đang tải...' : 'Tải về để nghe offline', run: () => !busy && download(track) });
     }
-    if (track.source === 'soundcloud' && track.link) items.push({ label: 'Mở trên SoundCloud', run: () => Linking.openURL(track.link) });
+    if (track.link && track.source && track.source !== 'audius') {
+      const where = { soundcloud: 'SoundCloud', jamendo: 'Jamendo', archive: 'Internet Archive' }[track.source] || 'trang gốc';
+      items.push({ label: `Mở trên ${where}`, run: () => Linking.openURL(track.link) });
+    }
     if (track.userId) items.push({ label: 'Xem nghệ sĩ', run: () => openArtist({ id: track.userId, name: track.artist }) });
     showSheet(track.title, items.map((i) => i.label), (i) => items[i].run(), items.findIndex((i) => i.destructive));
   };
@@ -47,7 +56,7 @@ export default function TrackItem({ track, onPress, onRemove }) {
           {active && <Ionicons name={status.playing ? 'volume-high' : 'volume-low'} size={16} color={colors.accent} style={{ marginRight: 6 }} />}
           <Text numberOfLines={1} style={[s.title, active && { color: colors.accent }]}>{track.title}</Text>
         </View>
-        <Text numberOfLines={1} style={s.artist}>{saved ? '⬇ ' : ''}{track.source === 'soundcloud' ? '☁ ' : ''}{track.artist}</Text>
+        <Text numberOfLines={1} style={s.artist}>{saved ? '⬇ ' : ''}{BADGE[track.source] || ''}{track.artist}</Text>
       </View>
       <Pressable hitSlop={10} style={s.btn} onPress={() => toggleLike(track)}>
         <Ionicons name={liked ? 'heart' : 'heart-outline'} size={24} color={liked ? colors.accent : colors.muted} />

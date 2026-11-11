@@ -10,13 +10,15 @@ import Segmented from '../components/Segmented';
 const mb = (n) => (n / 1048576).toFixed(1) + ' MB';
 
 export default function SettingsScreen() {
-  const { colors, fs, mode, setMode, accent, setAccent, size, setSize, fade, setFade, scId, setScId } = useTheme();
+  const { colors, fs, mode, setMode, accent, setAccent, size, setSize, fade, setFade, scId, setScId, jmId, setJmId, quality, setQuality, vn, setVn } = useTheme();
   const { downloads, canDownload, clearDownloads, exportBackup, importBackup } = usePlayer();
   const [bytes, setBytes] = useState(0);
   const [importing, setImporting] = useState(false);
   const [text, setText] = useState('');
   const [idText, setIdText] = useState(scId);
   useEffect(() => { setIdText(scId); }, [scId]);
+  const [jmText, setJmText] = useState(jmId);
+  useEffect(() => { setJmText(jmId); }, [jmId]);
   const files = Object.values(downloads).map((x) => x.file);
   const count = files.length;
 
@@ -91,6 +93,24 @@ export default function SettingsScreen() {
           <Text style={s.pSub}>Tên nghệ sĩ hiển thị theo cỡ chữ bạn chọn</Text>
         </View>
 
+        <Text style={s.h2}>Ưu tiên nhạc Việt</Text>
+        <Segmented
+          options={[{ key: 'first', label: 'Việt trước' }, { key: 'only', label: 'Chỉ nhạc Việt' }, { key: 'off', label: 'Tất cả' }]}
+          value={vn} onChange={setVn}
+        />
+        <Text style={s.note}>
+          Việt trước: bài nhạc Việt luôn xếp lên đầu ở Khám phá và Tìm kiếm, nhạc nước ngoài nằm phía sau. Chỉ nhạc Việt: ẩn hẳn nhạc nước ngoài ở Khám phá (Tìm kiếm vẫn hiện đủ để bạn chủ động tìm). Nhận diện dựa trên tên bài, nghệ sĩ và từ khóa tiếng Việt nên có thể sót một số bài viết không dấu.
+        </Text>
+
+        <Text style={s.h2}>Chất lượng âm thanh</Text>
+        <Segmented
+          options={[{ key: 'high', label: 'Cao nhất' }, { key: 'data', label: 'Tiết kiệm dữ liệu' }]}
+          value={quality} onChange={setQuality}
+        />
+        <Text style={s.note}>
+          Cao nhất: Jamendo phát MP3 VBR chất lượng cao, Internet Archive chọn file bitrate cao nhất của mỗi bài, Audius phát bản gốc. Tiết kiệm: Jamendo 96 kbps, Internet Archive ~128 kbps. Áp dụng cho bài phát và bài tải mới từ lúc này.
+        </Text>
+
         <Text style={s.h2}>Âm thanh</Text>
         <Segmented
           options={[{ key: 'on', label: 'Chuyển bài mượt' }, { key: 'off', label: 'Tắt' }]}
@@ -102,6 +122,14 @@ export default function SettingsScreen() {
 
         <Text style={s.h2}>Nguồn nhạc</Text>
         <Text style={s.note}>
+          Audius và Internet Archive dùng được ngay, không cần khóa. Jamendo cần client_id miễn phí: đăng ký tài khoản ở devportal.jamendo.com, tạo ứng dụng rồi dán client_id vào đây (nhạc Jamendo là nhạc độc lập theo giấy phép Creative Commons).
+        </Text>
+        <TextInput
+          value={jmText} onChangeText={setJmText} onEndEditing={() => setJmId(jmText.trim())} onSubmitEditing={() => setJmId(jmText.trim())}
+          autoCorrect={false} autoCapitalize="none" returnKeyType="done"
+          placeholder="Dán Jamendo client_id" placeholderTextColor={colors.muted} style={[s.input, { minHeight: 0 }]}
+        />
+        <Text style={[s.note, { marginTop: 14 }]}>
           SoundCloud client_id (lấy ở soundcloud.com/you/apps nếu đăng ký được). Chỉ dán client_id, không dán client_secret. Bài SoundCloud không tải offline được và có liên kết về trang gốc.
         </Text>
         <TextInput

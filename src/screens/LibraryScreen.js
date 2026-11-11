@@ -6,20 +6,26 @@ import { useTheme } from '../theme';
 import { usePlayer } from '../PlayerContext';
 import TrackList from '../components/TrackList';
 import Segmented from '../components/Segmented';
+import { computeStats, fmtDuration } from '../stats';
 
 const SEGS = [
   { key: 'likes', label: 'Đã thích' },
   { key: 'playlists', label: 'Playlist' },
   { key: 'downloads', label: 'Đã tải' },
   { key: 'history', label: 'Lịch sử' },
+  { key: 'reposts', label: 'Repost' },
+  { key: 'stats', label: 'Thống kê' },
 ];
+const DAY = 86400000;
+const PERIODS = [{ key: 'week', label: '7 ngày', ms: 7 * DAY }, { key: 'month', label: '30 ngày', ms: 30 * DAY }, { key: 'all', label: 'Tất cả', ms: 0 }];
 
 export default function LibraryScreen() {
   const { colors, fs } = useTheme();
-  const { likes, playlists, history, downloads, createPlaylist, deletePlaylist, removeFromPlaylist, clearHistory, playAt } = usePlayer();
+  const { likes, playlists, history, downloads, createPlaylist, deletePlaylist, removeFromPlaylist, clearHistory, playAt, reposts, log, clearLog } = usePlayer();
   const [seg, setSeg] = useState('likes');
   const [openId, setOpenId] = useState(null);
   const [name, setName] = useState('');
+  const [period, setPeriod] = useState('week');
   const s = useMemo(() => StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.page },
     h1: { color: colors.text, fontSize: fs(30), fontWeight: '800', padding: 16, paddingBottom: 8 },
@@ -38,6 +44,14 @@ export default function LibraryScreen() {
     plIcon: { width: 54, height: 54, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
     plTitle: { color: colors.text, fontSize: fs(17), fontWeight: '600' },
     plCount: { color: colors.muted, fontSize: fs(14), marginTop: 2 },
+    card: { flex: 1, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 14, marginRight: 10 },
+    cardNum: { color: colors.text, fontSize: fs(24), fontWeight: '800' },
+    cardLbl: { color: colors.muted, fontSize: fs(13), marginTop: 2 },
+    h2: { color: colors.text, fontSize: fs(18), fontWeight: '700', paddingHorizontal: 16, marginTop: 14, marginBottom: 6 },
+    artistRow: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 6 },
+    rank: { color: colors.accent, fontWeight: '800', width: 26, fontSize: fs(16) },
+    artistName: { flex: 1, color: colors.text, fontSize: fs(16) },
+    artistCount: { color: colors.muted, fontSize: fs(14) },
     empty: { color: colors.muted, textAlign: 'center', marginTop: 30, paddingHorizontal: 32, fontSize: fs(15), lineHeight: fs(24) },
   }), [colors, fs]);
 
@@ -71,6 +85,42 @@ export default function LibraryScreen() {
             </Pressable>
           </View>
         ) : null}
+      />
+    );
+  } else if (seg === 'reposts') {
+    body = <TrackList tracks={reposts} emptyText="Chạm dấu ⋯ ở bài hát rồi chọn Repost để đăng lại vào đây. Repost chỉ lưu trong máy bạn, không công khai." />;
+  } else if (seg === 'stats') {
+    const p = PERIODS.find((x) => x.key === period) || PERIODS[0];
+    const st = computeStats(log, p.ms ? Date.now() - p.ms : 0);
+    const top = st.topTracks.map((x) => x.track);
+    body = (
+      <TrackList
+        tracks={top} emptyText="Chưa có dữ liệu. Mỗi bài nghe được từ 20 giây sẽ được tính vào thống kê."
+        header={(
+          <View>
+            <Segmented options={PERIODS.map((x) => ({ key: x.key, label: x.label }))} value={period} onChange={setPeriod} />
+            <View style={[s.actions, { paddingTop: 4 }]}>
+              <View style={s.card}><Text style={s.cardNum}>{st.plays}</Text><Text style={s.cardLbl}>lượt nghe</Text></View>
+              <View style={s.card}><Text style={s.cardNum}>{fmtDuration(st.seconds)}</Text><Text style={s.cardLbl}>thời gian nghe (ước tính)</Text></View>
+            </View>
+            {st.topArtists.length > 0 && <Text style={s.h2}>Nghệ sĩ nghe nhiều nhất</Text>}
+            {st.topArtists.slice(0, 5).map((a, i) => (
+              <View key={a.name} style={s.artistRow}>
+                <Text style={s.rank}>{i + 1}</Text>
+                <Text numberOfLines={1} style={s.artistName}>{a.name}</Text>
+                <Text style={s.artistCount}>{a.count} lượt</Text>
+              </View>
+            ))}
+            {top.length > 0 && <Text style={s.h2}>Bài nghe nhiều nhất</Text>}
+            {log.length > 0 && (
+              <View style={s.actions}>
+                <Pressable style={s.ghost} onPress={() => Alert.alert('Xóa thống kê?', 'Toàn bộ nhật ký nghe sẽ bị xóa.', [{ text: 'Hủy', style: 'cancel' }, { text: 'Xóa', style: 'destructive', onPress: clearLog }])}>
+                  <Ionicons name="trash-outline" size={18} color={colors.muted} /><Text style={s.ghostText}>Xóa thống kê</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
       />
     );
   } else if (open) {
@@ -129,7 +179,7 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={s.screen} edges={['top']}>
       {!(seg === 'playlists' && open) && <Text style={s.h1}>Thư viện</Text>}
-      {!(seg === 'playlists' && open) && <Segmented options={SEGS} value={seg} onChange={(k) => { setSeg(k); setOpenId(null); }} />}
+      {!(seg === 'playlists' && open) && <Segmented scroll options={SEGS} value={seg} onChange={(k) => { setSeg(k); setOpenId(null); }} />}
       {body}
     </SafeAreaView>
   );

@@ -1,4 +1,4 @@
-import { ActionSheetIOS, Alert, Platform } from 'react-native';
+import { ActionSheetIOS, Alert, Platform, Share } from 'react-native';
 
 // Bảng chọn gốc của iOS. options: mảng chuỗi; onSelect(index).
 export function showSheet(title, options, onSelect, destructiveIndex) {
@@ -13,4 +13,10 @@ export function showSheet(title, options, onSelect, destructiveIndex) {
       { text: 'Hủy', style: 'cancel' },
     ]);
   }
+}
+
+// Chia sẻ bài hát: gửi tên bài + nghệ sĩ và liên kết trang gốc (nếu có).
+export async function shareTrack(track) {
+  const text = `${track.title} – ${track.artist}`;
+  try { await Share.share({ message: track.link ? `${text}\n${track.link}` : `${text} (nghe trên Sonara)` }); } catch (e) {}
 }

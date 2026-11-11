@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './src/theme';
 import { PlayerProvider, usePlayer } from './src/PlayerContext';
 import HomeScreen from './src/screens/HomeScreen';
+import FeedScreen from './src/screens/FeedScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -18,7 +19,7 @@ import AddToPlaylistModal from './src/components/AddToPlaylistModal';
 import ArtistModal from './src/components/ArtistModal';
 
 const Tab = createBottomTabNavigator();
-const icons = { Home: 'compass', Search: 'search', Library: 'library', Settings: 'settings' };
+const icons = { Home: 'compass', Feed: 'newspaper', Search: 'search', Library: 'library', Settings: 'settings' };
 
 function Shell() {
   const { colors, mode, liquid } = useTheme();
@@ -54,6 +55,7 @@ function Shell() {
           })}
         >
           <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Khám phá' }} />
+          <Tab.Screen name="Feed" component={FeedScreen} options={{ title: 'Bảng tin' }} />
           <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Tìm kiếm' }} />
           <Tab.Screen name="Library" component={LibraryScreen} options={{ title: 'Thư viện' }} />
           <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Cài đặt' }} />
