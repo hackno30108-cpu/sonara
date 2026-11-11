@@ -1,0 +1,26 @@
+# Build file IPA CHƯA KÝ trên máy Mac của GitHub (miễn phí), rồi ký bằng Sideloadly trên Windows.
+name: Build unsigned IPA
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx expo prebuild --platform ios --no-install
+      - run: cd ios && pod install
+      - name: Build
+        run: |
+          cd ios
+          xcodebuild -workspace Sonara.xcworkspace -scheme Sonara -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          cp -R ios/build/Build/Products/Release-iphoneos/Sonara.app Payload/
+          zip -r Sonara.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with: { name: Sonara-ipa, path: Sonara.ipa }
